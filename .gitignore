@@ -1,0 +1,15 @@
+# Compilación y binarios
+/cmake-build-debug/
+/cmake-build-release/
+bin/
+obj/
+*.exe
+*.o
+*.a
+
+# Archivos de datos locales (opcional, si no quieres subir tus .dat)
+*.dat
+reporte_estadisticas.txt
+
+# Configuración de IDE (CLion/JetBrains)
+.idea/
