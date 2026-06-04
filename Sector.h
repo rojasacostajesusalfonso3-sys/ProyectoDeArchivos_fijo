@@ -16,10 +16,18 @@ public:
         setNombre(n);
     }
 
-    int getId() const { return id; }
-    string getNombre() const { return nombre; }
+    int getId() const {
+        return id;
+    }
+    string getNombre() const {
+        return nombre;
+    }
 
-    void setId(int _id) { id = _id; }
+
+    void setId(int _id) {
+        id = _id;
+    }
+
     void setNombre(const string& n) {
         size_t len = n.copy(nombre, sizeof(nombre) - 1);
         nombre[len] = '\0';
