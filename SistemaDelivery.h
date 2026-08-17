@@ -10,6 +10,8 @@
 #include "Cliente.h"
 #include "Repartidor.h"
 #include "Sector.h"
+#include "Grafo.h"
+#include <sstream>
 
 using namespace std;
 
@@ -19,6 +21,7 @@ private:
     vector<Repartidor> repartidores;
     vector<Sector> sectores;
     bool jornadaIniciada;
+    Grafo* grafoSectores;
 
 
     map<int, ColaClientes> colasEsperaPorSector;
@@ -26,15 +29,18 @@ private:
     const string FILE_CLIENTES = "clientes.dat";
     const string FILE_REPARTIDORES = "repartidores.dat";
     const string FILE_SECTORES = "sectores.dat";
+    const string FILE_GRAFO = "Grafo.txt";
 
 public:
     SistemaDelivery() {
         jornadaIniciada = false;
+        grafoSectores = nullptr;
         cargarDatos();
     }
 
     ~SistemaDelivery() {
         guardarDatos();
+        delete grafoSectores;
     }
 
     void cargarDatos() {
@@ -61,12 +67,59 @@ public:
 
         ifstream fSec(FILE_SECTORES, ios::binary);
         if (fSec) {
+            int maxId = -1;
             Sector s;
             while (fSec.read(reinterpret_cast<char*>(&s), sizeof(Sector))) {
                 sectores.push_back(s);
+                if (s.getId() > maxId) {
+                    maxId = s.getId();
+                }
             }
             fSec.close();
+
+            if (!sectores.empty()) {
+                // El tamaño de la matriz debe ser maxId + 1 para poder usar los IDs como índices.
+                // Ej: si el ID más alto es 9, necesitamos una matriz de 10x10 (índices 0 a 9).
+                grafoSectores = new Grafo(maxId + 1);
+                // Una vez creado el grafo, leemos las conexiones desde el archivo.
+                cargarConexionesGrafo(FILE_GRAFO);
+            }
         }
+    }
+
+    void cargarConexionesGrafo(const string& nombreArchivo) {
+        if (!grafoSectores) { // Seguridad: no hacer nada si el grafo no existe
+            return;
+        }
+
+        ifstream archivo(nombreArchivo);
+        if (!archivo.is_open()) {
+            cerr << "ADVERTENCIA: No se pudo abrir el archivo de grafo '" << nombreArchivo << "'. No se cargaran las distancias." << endl;
+            return;
+        }
+
+        string linea;
+
+        while (getline(archivo, linea)) {
+            // Añadimos una comprobación para ignorar líneas vacías.
+            // Esto es muy común si el archivo de texto tiene una línea en blanco al final.
+            if (linea.empty()) {
+                continue;
+            }
+            stringstream ss(linea);
+            string origen_str, destino_str, peso_str;
+            int origen, destino, peso;
+            getline(ss, origen_str, ',');
+            getline(ss, destino_str, ',');
+            getline(ss, peso_str);
+            origen = stoi(origen_str);
+            destino = stoi(destino_str);
+            peso = stoi(peso_str);
+            grafoSectores->agregarArista(origen, destino, peso);
+
+
+        }
+        cout << "Conexiones del grafo cargadas." << endl;
     }
 
     void guardarDatos() {
@@ -371,6 +424,73 @@ public:
         }
         cout << "Repartidor no encontrado.\n";
     }
+
+    void solicitarEnvioRutaOptima() {
+        cout << "\n--- SOLICITAR ENVIO CON RUTA OPTIMA ---\n";
+
+        // 1. Encontrar y mostrar repartidores disponibles
+        vector<Repartidor> disponibles;
+        for (const auto& r : repartidores) {
+            if (r.isDisponible()) {
+                disponibles.push_back(r);
+            }
+        }
+
+        if (disponibles.empty()) {
+            cout << "No hay repartidores disponibles en este momento.\n";
+            return;
+        }
+
+        cout << "Repartidores disponibles:\n";
+        for (const auto& r : disponibles) {
+            r.mostrar();
+        }
+
+        // 2. Pedir al usuario que elija por placa
+        string placaSeleccionada;
+        cout << "\nIngrese la placa del repartidor que desea seleccionar: ";
+        cin >> placaSeleccionada;
+        cin.ignore(); // Limpiar el buffer
+
+        // 3. Encontrar el repartidor y obtener el origen
+        int origen = -1;
+        Repartidor* repartidorSeleccionado = nullptr; // Usamos un puntero para poder modificar el repartidor original
+
+        if ((repartidorSeleccionado = buscarRepartidorPorPlaca(placaSeleccionada)) == nullptr) {
+            cout << "Placa no valida o repartidor no disponible. Operacion cancelada.\n";
+            return;
+        }
+
+        // 4. Pedir el destino
+        int destino;
+        origen = repartidorSeleccionado->getIdSectorActual();
+        cout << "Sector actual del repartidor (" << repartidorSeleccionado->getNombre() << "): " << origen << endl;
+        cout << "Ingrese el ID del sector de destino: ";
+        cin >> destino;
+        cin.ignore();
+
+        // 5. Validar, calcular la ruta y actualizar estado
+        if (grafoSectores) {
+            grafoSectores->encontrarRutaMinima(origen, destino);
+
+            repartidorSeleccionado->setDisponible(false);
+            repartidorSeleccionado->incrementarServicios();
+            repartidorSeleccionado->setIdSectorActual(destino);
+            cout << "\nServicio asignado a " << repartidorSeleccionado->getNombre() << ". La ruta optima ha sido calculada.\n";
+        } else {
+            cout << "Error: El grafo de sectores no ha sido inicializado.\n";
+        }
+    }
+private: // Funcion ayudante
+    Repartidor* buscarRepartidorPorPlaca(const string& placa) {
+        for (auto& r : repartidores) {
+            if (string(r.getPlaca()) == placa && r.isDisponible()) {
+                return &r; // Devuelve un puntero al repartidor encontrado
+            }
+        }
+        return nullptr; // No se encontró
+    }
+
 };
 
 #endif

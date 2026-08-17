@@ -94,7 +94,6 @@ void subMenuSectores(SistemaDelivery& sistema) {
             cout << "ID Sector: "; cin >> id; cin.ignore();
             cout << "Nombre Sector: "; getline(cin, n);
             sistema.agregarSector(Sector(id, n));
-        } else if (opcion == 8) { // Mantenemos la lógica de negocio pero corregimos la opción a 2
         } else if (opcion == 2) {
             int id; string n;
             cout << "ID del sector a modificar: "; cin >> id; cin.ignore();
@@ -144,6 +143,7 @@ void menuServicio(SistemaDelivery& sistema) {
         cout << "1. Actualizar Ubicacion Repartidor\n";
         cout << "2. Solicitar Envio\n";
         cout << "3. Finalizar Entrega\n";
+        cout << "4. Solicitar Envio (Ruta Optima)\n";
         cout << "0. Finalizar Jornada (Generar Reporte y Salir)\n";
         cout << "Opcion: ";
         cin >> opcion;
@@ -164,6 +164,8 @@ void menuServicio(SistemaDelivery& sistema) {
             string placa;
             cout << "Placa del repartidor que finaliza: "; cin >> placa; cin.ignore();
             sistema.finalizarEntrega(placa);
+        } else if (opcion == 4) {
+            sistema.solicitarEnvioRutaOptima();
         }
     } while (opcion != 0);
     sistema.finalizarJornada();
