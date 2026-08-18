@@ -61,11 +61,11 @@ void Grafo::encontrarRutaMinima(int origen, int destino) {
     // La distancia del origen a sí mismo es siempre 0.
     distancias[origen] = 0;
 
-    // --- ALGORITMO DE DIJKSTRA ---
+    // ALGORITMO DE DIJKSTRA
     // Repetimos el proceso para todos los nodos.
     for (int i = 0; i < numSectores - 1; ++i) {
 
-        // --- PASO A: Encontrar el nodo no visitado con la distancia mínima ---
+        //Encontrar el nodo no visitado con la distancia mínima
         int distanciaMinima = INT_MAX;
         int sectorActual = -1;
 
@@ -77,25 +77,23 @@ void Grafo::encontrarRutaMinima(int origen, int destino) {
         }
 
 
-        // Si no se encuentra un sector alcanzable, podemos parar.
+        // Si no se encuentra un sector alcanzable, paramos.
         if (sectorActual == -1) break;
 
-        // --- PASO B: Marcar el nodo actual como visitado ---
-        // Ya no volveremos a procesar este nodo, su distancia es definitiva.
+        // Marcar el nodo actual como visitado
         visitados[sectorActual] = true;
 
-        // --- PASO C: Actualizar las distancias de los vecinos ---
-        // "Relajamos" las aristas: vemos si podemos acortar el camino a los vecinos a través del nodo actual.
+        // Actualizar las distancias de los vecinos
         for (int vecino = 0; vecino < numSectores; ++vecino) {
 
             // Condiciones:
             // 1. El vecino no ha sido visitado aún.
             // 2. Existe una conexión directa entre el sector actual y el vecino.
-            // 3. El nuevo camino (origen -> sectorActual -> vecino) es más corto que el que teníamos registrado para el vecino.
+            // 3. El nuevo camino (origen -> sectorActual -> vecino) es más corto que el que estaba registrado para el vecino.
             if (!visitados[vecino] && matrizAdyacencia[sectorActual][vecino] != INT_MAX &&
                 distancias[sectorActual] + matrizAdyacencia[sectorActual][vecino] < distancias[vecino])
             {
-                // ¡Encontramos una ruta mejor! La actualizamos.
+                // Nueva ruta encontrada. Actualizamos.
                 distancias[vecino] = distancias[sectorActual] + matrizAdyacencia[sectorActual][vecino];
                 previo[vecino] = sectorActual; // Anotamos que para llegar al vecino, vinimos desde sectorActual.
             }
@@ -103,7 +101,7 @@ void Grafo::encontrarRutaMinima(int origen, int destino) {
 
     }
 
-    // --- 3. IMPRESIÓN DE RESULTADOS ---
+    // IMPRESIÓN DE RESULTADOS
     if (distancias[destino] == INT_MAX) {
         std::cout << "No se pudo encontrar una ruta desde el sector " << origen << " al sector " << destino << "." << std::endl;
     } else {
@@ -111,7 +109,7 @@ void Grafo::encontrarRutaMinima(int origen, int destino) {
         std::cout << "Distancia total del recorrido: " << distancias[destino] << " km." << std::endl;
         std::cout << "Secuencia de la ruta: ";
 
-        // Usamos una pila (stack) para invertir la ruta y mostrarla en el orden correcto.
+        // Usamos una pila para invertir la ruta y mostrarla en el orden correcto.
         std::stack<int> ruta;
         int paso = destino;
         while (paso != -1) {
